@@ -1,0 +1,12 @@
+node_modules/
+.yarn/cache/
+.yarn/install-state.gz
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+.env
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db

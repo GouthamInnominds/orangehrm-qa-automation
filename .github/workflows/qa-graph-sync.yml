@@ -1,0 +1,35 @@
+name: QA Automation QKG Sync
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  playwright-and-qkg-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout QA Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright Dependencies
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Run Smoke Suite (when target URL configured)
+        if: env.OHRM_BASE_URL != ''
+        continue-on-error: true
+        run: npm run test:smoke
+
+      - name: Checkout App QKG Engine Tools & Publish Execution History
+        if: env.NEO4J_URI != '' && hashFiles('test-results/playwright-report.json') != ''
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository_owner }}/Orange-HRMS.git /tmp/app-repo
+          npm --prefix /tmp/app-repo/tools ci
+          QKG_QA_REPO_DIR="$PWD" node /tmp/app-repo/tools/qkg_engine/execution_history_ingestion.js \
+            playwright test-results/playwright-report.json "qa-gh-${{ github.run_id }}" "${{ github.sha }}" playwright_smoke
