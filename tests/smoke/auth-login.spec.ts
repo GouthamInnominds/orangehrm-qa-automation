@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
-
 /**
  * @coversRequirement FR_ADM_002
  * @coversEndpoint GET /auth/login
  * @coversEndpoint POST /auth/validate
  * @coversComponent Login.vue
  */
+import { test, expect } from '@playwright/test';
+
 test.describe('Core - Authentication Smoke', () => {
   test(
     'renders login form and enforces required fields',
