@@ -18,18 +18,37 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Playwright Dependencies
-        run: npm ci && npx playwright install --with-deps chromium
+      - name: Install Test Dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npx playwright install --with-deps chromium
 
-      - name: Run Smoke Suite (when target URL configured)
+      - name: Run Playwright Smoke Suite (when target URL configured)
         if: env.OHRM_BASE_URL != ''
         continue-on-error: true
         run: npm run test:smoke
 
+      - name: Run Cypress Genuine Integration Suite (when CYPRESS_BASE_URL configured)
+        if: env.CYPRESS_BASE_URL != ''
+        continue-on-error: true
+        run: |
+          npm install --no-save mocha-junit-reporter
+          mkdir -p cypress/results
+          npx cypress run --spec "cypress/e2e/integration/**/*.cy.js" \
+            --reporter mocha-junit-reporter \
+            --reporter-options "mochaFile=cypress/results/cypress-[hash].xml,useFullSuiteTitle=true,suiteTitleSeparatedBy= > ,toConsole=false"
+
       - name: Checkout App QKG Engine Tools & Publish Execution History
-        if: env.NEO4J_URI != '' && hashFiles('test-results/playwright-report.json') != ''
+        if: env.NEO4J_URI != '' && (hashFiles('test-results/playwright-report.json') != '' || hashFiles('cypress/results/*.xml') != '')
         run: |
           git clone --depth 1 https://github.com/${{ github.repository_owner }}/Orange-HRMS.git /tmp/app-repo
           npm --prefix /tmp/app-repo/tools ci
-          QKG_QA_REPO_DIR="$PWD" node /tmp/app-repo/tools/qkg_engine/execution_history_ingestion.js \
-            playwright test-results/playwright-report.json "qa-gh-${{ github.run_id }}" "${{ github.sha }}" playwright_smoke
+          if [ -f test-results/playwright-report.json ]; then
+            QKG_QA_REPO_DIR="$PWD" node /tmp/app-repo/tools/qkg_engine/execution_history_ingestion.js \
+              playwright test-results/playwright-report.json "qa-gh-${{ github.run_id }}" "${{ github.sha }}" playwright_smoke
+          fi
+          for xml in cypress/results/*.xml; do
+            [ -f "$xml" ] || continue
+            QKG_QA_REPO_DIR="$PWD" node /tmp/app-repo/tools/qkg_engine/execution_history_ingestion.js \
+              cypress "$xml" "qa-gh-${{ github.run_id }}" "${{ github.sha }}" cypress_integration
+          done

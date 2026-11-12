@@ -5,6 +5,7 @@ test-results/
 playwright-report/
 cypress/videos/
 cypress/screenshots/
+cypress/results/
 .env
 __pycache__/
 *.py[cod]
