@@ -13,12 +13,12 @@ const { spawn } = require('child_process');
 const path = require('path');
 const readline = require('readline');
 
-const SERVER_SCRIPT = 'C:/Users/parav/Workspace/Orange HRMS/tools/mcp_server.js';
+const SERVER_SCRIPT = path.resolve(__dirname, 'mcp-bridge.js');
 
 class McpClientTest {
   constructor() {
     this.child = spawn('node', [SERVER_SCRIPT], {
-      cwd: 'C:/Users/parav/Workspace/Orange HRMS/tools',
+      cwd: path.resolve(__dirname, '..'),
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
