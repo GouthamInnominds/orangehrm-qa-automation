@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "qkg-intelligence": {
+      "command": "node",
+      "args": ["C:/Users/parav/Workspace/Orange HRMS/tools/mcp_server.js"]
+    }
+  }
+}
